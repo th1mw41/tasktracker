@@ -1,1 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TaskTracker</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: linear-gradient(135deg, #0e1824, #192f46 45%, #244864);
+        --card-bg: rgba(255, 255, 255, 0.08);
+        --border: rgba(255, 255, 255, 0.12);
+        --accent: #7cd1ff;
+        --accent-strong: #36a8ff;
+        --text: #f1f5f9;
+        --muted: #cbd5f5;
+        font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
 
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1rem 4rem;
+      }
+
+      main {
+        width: min(960px, 100%);
+        display: grid;
+        gap: 1.75rem;
+      }
+
+      header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        text-align: center;
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: clamp(2.25rem, 5vw, 3.5rem);
+        letter-spacing: 0.04em;
+      }
+
+      header p {
+        margin: 0 auto;
+        max-width: 34rem;
+        color: var(--muted);
+        font-size: 1.05rem;
+        line-height: 1.55;
+      }
+
+      section.card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 1.5rem;
+        padding: 1.75rem;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+      }
+
+      form {
+        display: grid;
+        gap: 1rem 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        align-items: end;
+      }
+
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-align: left;
+      }
+
+      input,
+      textarea,
+      button,
+      select {
+        font: inherit;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 0.75rem;
+        padding: 0.75rem 0.9rem;
+        background: rgba(10, 22, 34, 0.65);
+        color: var(--text);
+        transition: border-color 0.2s ease, transform 0.1s ease;
+      }
+
+      input:focus,
+      textarea:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(124, 209, 255, 0.25);
+      }
+
+      button[type="submit"] {
+        background: linear-gradient(120deg, var(--accent), var(--accent-strong));
+        border: none;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+      }
+
+      button[type="submit"]:hover {
+        transform: translateY(-1px);
+      }
+
+      .task-list {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .task {
+        display: grid;
+        gap: 0.75rem;
+        padding: 1.1rem 1.2rem;
+        background: rgba(2, 12, 20, 0.6);
+        border: 1px solid transparent;
+        border-radius: 1rem;
+        transition: border-color 0.25s ease, transform 0.15s ease;
+      }
+
+      .task:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+
+      .task.overdue {
+        border-color: rgba(255, 109, 109, 0.7);
+        background: rgba(48, 8, 16, 0.65);
+      }
+
+      .task.completed {
+        border-color: rgba(148, 255, 172, 0.55);
+        background: rgba(14, 36, 24, 0.5);
+        opacity: 0.85;
+      }
+
+      .task-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+
+      .task-title {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 700;
+        word-break: break-word;
+      }
+
+      .task-deadline {
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .task-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .task-actions button {
+        padding: 0.55rem 0.85rem;
+        border-radius: 0.65rem;
+        font-size: 0.85rem;
+        border: 1px solid transparent;
+        background: rgba(255, 255, 255, 0.08);
+        cursor: pointer;
+      }
+
+      .task-actions button:hover {
+        border-color: var(--accent);
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+      }
+
+      .summary-card {
+        padding: 1.1rem 1.2rem;
+        border-radius: 1.1rem;
+        background: rgba(6, 20, 31, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: left;
+      }
+
+      .summary-card h3 {
+        margin: 0 0 0.4rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .summary-card p {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 700;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 2.5rem 1rem;
+        color: rgba(255, 255, 255, 0.7);
+        border: 1px dashed rgba(255, 255, 255, 0.22);
+        border-radius: 1.2rem;
+        background: rgba(3, 11, 20, 0.55);
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 2.5rem 1rem;
+        }
+
+        form {
+          grid-template-columns: 1fr;
+        }
+
+        .task-header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .task-actions {
+          justify-content: flex-end;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>TaskTracker</h1>
+        <p>
+          Stay ahead of your deadlines with a live countdown, quick summaries, and
+          local tracking that remembers your progress.
+        </p>
+      </header>
+
+      <section class="card" aria-labelledby="add-task-title">
+        <h2 id="add-task-title" style="margin-top: 0">Add a new task</h2>
+        <form id="task-form">
+          <label>
+            Task name
+            <input
+              id="task-title"
+              name="title"
+              type="text"
+              placeholder="Design new landing page"
+              required
+              maxlength="120"
+            />
+          </label>
+          <label>
+            Deadline
+            <input
+              id="task-deadline"
+              name="deadline"
+              type="datetime-local"
+              required
+            />
+          </label>
+          <label>
+            Notes (optional)
+            <textarea
+              id="task-notes"
+              name="notes"
+              rows="1"
+              placeholder="Add any context you need to remember"
+            ></textarea>
+          </label>
+          <button type="submit">Add task</button>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="overview-title">
+        <div class="summary">
+          <div class="summary-card">
+            <h3>Total</h3>
+            <p id="total-count">0</p>
+          </div>
+          <div class="summary-card">
+            <h3>Due soon</h3>
+            <p id="due-soon-count">0</p>
+          </div>
+          <div class="summary-card">
+            <h3>Overdue</h3>
+            <p id="overdue-count">0</p>
+          </div>
+          <div class="summary-card">
+            <h3>Completed</h3>
+            <p id="completed-count">0</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="task-list-title">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 1rem; flex-wrap: wrap;">
+          <h2 id="task-list-title" style="margin: 0">Your tasks</h2>
+          <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <label style="font-size: 0.85rem; font-weight: 500; gap: 0.35rem;">
+              Show completed
+              <input id="toggle-completed" type="checkbox" checked />
+            </label>
+            <button id="clear-completed" type="button" style="background: rgba(255, 255, 255, 0.08); font-weight: 600;">
+              Clear completed
+            </button>
+          </div>
+        </div>
+        <div id="task-list" class="task-list" role="list"></div>
+        <p id="empty-state" class="empty-state" hidden>
+          No tasks yet. Add your first task above to get started!
+        </p>
+      </section>
+    </main>
+
+    <template id="task-template">
+      <article class="task" role="listitem">
+        <div class="task-header">
+          <div>
+            <h3 class="task-title"></h3>
+            <p class="task-deadline"></p>
+            <p class="task-countdown" style="margin: 0; font-weight: 600"></p>
+          </div>
+          <div class="task-actions" aria-label="Task actions"></div>
+        </div>
+        <p class="task-notes" style="margin: 0; color: rgba(255, 255, 255, 0.7);"></p>
+      </article>
+    </template>
+
+    <script>
+      const form = document.querySelector("#task-form");
+      const titleInput = document.querySelector("#task-title");
+      const deadlineInput = document.querySelector("#task-deadline");
+      const notesInput = document.querySelector("#task-notes");
+      const list = document.querySelector("#task-list");
+      const emptyState = document.querySelector("#empty-state");
+      const toggleCompleted = document.querySelector("#toggle-completed");
+      const clearCompletedButton = document.querySelector("#clear-completed");
+
+      const summaryElements = {
+        total: document.querySelector("#total-count"),
+        dueSoon: document.querySelector("#due-soon-count"),
+        overdue: document.querySelector("#overdue-count"),
+        completed: document.querySelector("#completed-count"),
+      };
+
+      const STORAGE_KEY = "tasktracker.tasks";
+      let tasks = loadTasks();
+
+      renderTasks();
+      const countdownTimer = setInterval(() => {
+        updateCountdowns();
+        updateSummary();
+      }, 1_000);
+
+      window.addEventListener("beforeunload", () => {
+        clearInterval(countdownTimer);
+      });
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const title = titleInput.value.trim();
+        const deadlineValue = deadlineInput.value;
+        const notes = notesInput.value.trim();
+
+        if (!title || !deadlineValue) {
+          return;
+        }
+
+        const deadline = new Date(deadlineValue);
+        if (Number.isNaN(deadline.getTime())) {
+          alert("Please enter a valid deadline.");
+          return;
+        }
+
+        const newTask = {
+          id: crypto.randomUUID(),
+          title,
+          deadline: deadline.toISOString(),
+          notes,
+          completed: false,
+          createdAt: new Date().toISOString(),
+        };
+
+        tasks.push(newTask);
+        saveTasks();
+        renderTasks();
+        form.reset();
+        titleInput.focus();
+      });
+
+      toggleCompleted.addEventListener("change", () => {
+        renderTasks();
+      });
+
+      clearCompletedButton.addEventListener("click", () => {
+        const hasCompleted = tasks.some((task) => task.completed);
+        if (!hasCompleted) {
+          return;
+        }
+        if (confirm("Clear all completed tasks?")) {
+          tasks = tasks.filter((task) => !task.completed);
+          saveTasks();
+          renderTasks();
+        }
+      });
+
+      function loadTasks() {
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (!stored) return [];
+          const parsed = JSON.parse(stored);
+          if (!Array.isArray(parsed)) return [];
+          return parsed;
+        } catch (error) {
+          console.error("Failed to parse tasks from storage", error);
+          return [];
+        }
+      }
+
+      function saveTasks() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      }
+
+      function renderTasks() {
+        list.innerHTML = "";
+        const shouldShowCompleted = toggleCompleted.checked;
+        const visibleTasks = [...tasks]
+          .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+          .filter((task) => shouldShowCompleted || !task.completed);
+
+        visibleTasks.forEach((task) => {
+          const element = createTaskElement(task);
+          list.appendChild(element);
+        });
+
+        const isEmpty = visibleTasks.length === 0;
+        list.hidden = isEmpty;
+        emptyState.hidden = !isEmpty;
+        updateSummary();
+      }
+
+      function createTaskElement(task) {
+        const template = document.querySelector("#task-template");
+        const element = template.content.firstElementChild.cloneNode(true);
+        const titleElement = element.querySelector(".task-title");
+        const deadlineElement = element.querySelector(".task-deadline");
+        const countdownElement = element.querySelector(".task-countdown");
+        const notesElement = element.querySelector(".task-notes");
+        const actionsElement = element.querySelector(".task-actions");
+
+        titleElement.textContent = task.title;
+        const deadline = new Date(task.deadline);
+        const formatter = new Intl.DateTimeFormat([], {
+          dateStyle: "medium",
+          timeStyle: "short",
+        });
+        deadlineElement.textContent = `Due ${formatter.format(deadline)}`;
+        countdownElement.textContent = formatCountdown(deadline);
+
+        if (task.notes) {
+          notesElement.textContent = task.notes;
+        } else {
+          notesElement.hidden = true;
+        }
+
+        const toggleButton = document.createElement("button");
+        toggleButton.type = "button";
+        toggleButton.textContent = task.completed ? "Mark incomplete" : "Mark complete";
+        toggleButton.addEventListener("click", () => {
+          task.completed = !task.completed;
+          saveTasks();
+          renderTasks();
+        });
+
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.textContent = "Delete";
+        deleteButton.addEventListener("click", () => {
+          if (confirm(`Delete task "${task.title}"?`)) {
+            tasks = tasks.filter((item) => item.id !== task.id);
+            saveTasks();
+            renderTasks();
+          }
+        });
+
+        actionsElement.append(toggleButton, deleteButton);
+
+        if (task.completed) {
+          element.classList.add("completed");
+        } else if (isOverdue(deadline)) {
+          element.classList.add("overdue");
+        }
+
+        element.dataset.id = task.id;
+        return element;
+      }
+
+      function updateCountdowns() {
+        const elements = list.querySelectorAll(".task");
+        elements.forEach((element) => {
+          const id = element.dataset.id;
+          const task = tasks.find((item) => item.id === id);
+          if (!task) return;
+          const countdownElement = element.querySelector(".task-countdown");
+          if (!countdownElement) return;
+          const deadline = new Date(task.deadline);
+          countdownElement.textContent = formatCountdown(deadline);
+          element.classList.toggle("overdue", !task.completed && isOverdue(deadline));
+        });
+      }
+
+      function updateSummary() {
+        const total = tasks.length;
+        const completed = tasks.filter((task) => task.completed).length;
+        const overdue = tasks.filter(
+          (task) => !task.completed && isOverdue(new Date(task.deadline))
+        ).length;
+        const dueSoon = tasks.filter((task) => {
+          if (task.completed) return false;
+          const deadline = new Date(task.deadline);
+          const diff = deadline - new Date();
+          const twelveHours = 1000 * 60 * 60 * 12;
+          return diff > 0 && diff <= twelveHours;
+        }).length;
+
+        summaryElements.total.textContent = total;
+        summaryElements.completed.textContent = completed;
+        summaryElements.overdue.textContent = overdue;
+        summaryElements.dueSoon.textContent = dueSoon;
+      }
+
+      function formatCountdown(deadline) {
+        const now = new Date();
+        const diff = deadline - now;
+        const formatter = new Intl.RelativeTimeFormat(undefined, {
+          numeric: "auto",
+        });
+
+        if (diff === 0) return "Due now";
+
+        const units = [
+          { unit: "day", ms: 1000 * 60 * 60 * 24 },
+          { unit: "hour", ms: 1000 * 60 * 60 },
+          { unit: "minute", ms: 1000 * 60 },
+        ];
+
+        for (const { unit, ms } of units) {
+          const value = diff / ms;
+          if (Math.abs(value) >= 1) {
+            return formatter.format(Math.round(value), unit);
+          }
+        }
+
+        return diff < 0 ? "Seconds overdue" : "Seconds remaining";
+      }
+
+      function isOverdue(deadline) {
+        return deadline.getTime() < Date.now();
+      }
+    </script>
+  </body>
+</html>
