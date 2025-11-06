@@ -549,28 +549,43 @@
       }
 
       function formatCountdown(deadline) {
-        const now = new Date();
-        const diff = deadline - now;
-        const formatter = new Intl.RelativeTimeFormat(undefined, {
-          numeric: "auto",
-        });
+        const now = Date.now();
+        const diff = deadline.getTime() - now;
 
         if (diff === 0) return "Due now";
 
-        const units = [
-          { unit: "day", ms: 1000 * 60 * 60 * 24 },
-          { unit: "hour", ms: 1000 * 60 * 60 },
-          { unit: "minute", ms: 1000 * 60 },
-        ];
+        const minute = 1000 * 60;
+        const hour = minute * 60;
+        const day = hour * 24;
 
-        for (const { unit, ms } of units) {
-          const value = diff / ms;
-          if (Math.abs(value) >= 1) {
-            return formatter.format(Math.round(value), unit);
-          }
+        if (Math.abs(diff) < minute) {
+          return diff < 0 ? "Seconds overdue" : "Seconds remaining";
         }
 
-        return diff < 0 ? "Seconds overdue" : "Seconds remaining";
+        const units = [
+          { label: "day", plural: "days", value: day },
+          { label: "hour", plural: "hours", value: hour },
+          { label: "minute", plural: "minutes", value: minute },
+        ];
+
+        const parts = [];
+        let remainder = Math.abs(diff);
+
+        for (const unit of units) {
+          const amount = Math.floor(remainder / unit.value);
+          if (amount > 0) {
+            parts.push(`${amount} ${amount === 1 ? unit.label : unit.plural}`);
+            remainder -= amount * unit.value;
+          }
+          if (parts.length === 2) break;
+        }
+
+        const timeString = parts.join(" ");
+        if (!timeString) {
+          return diff < 0 ? "Seconds overdue" : "Seconds remaining";
+        }
+
+        return diff < 0 ? `Overdue by ${timeString}` : `Due in ${timeString}`;
       }
 
       function isOverdue(deadline) {
